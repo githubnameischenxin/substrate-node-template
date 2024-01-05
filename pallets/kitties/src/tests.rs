@@ -16,6 +16,8 @@ fn create_kitty_works() {
         assert_eq!(KittiesModule::kitty_owner(kitty_id), Some(account_id));
         assert_eq!(KittiesModule::kitty_parents(kitty_id), None);
 
+        System::assert_has_event(Event::KittyCreated { who: account_id, kitty_id: kitty_id, kitty: KittiesModule::kitties(kitty_id).unwrap() }.into() );
+
         System::assert_last_event(Event::KittyCreated { who: account_id, kitty_id: kitty_id, kitty: KittiesModule::kitties(kitty_id).unwrap() }.into() );
 
         crate::NextKittyId::<Test>::set(crate::KittyId::max_value());
