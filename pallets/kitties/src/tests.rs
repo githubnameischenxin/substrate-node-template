@@ -7,9 +7,10 @@ fn create_kitty_works() {
     new_test_ext().execute_with(|| {
         let kitty_id = 0;
         let account_id = 1;
+        let name: [u8; 8] = *b"testcat1";
 
         assert_eq!(KittiesModule::next_kitty_id(), kitty_id);
-        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id)));
+        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id), name));
 
         assert_eq!(KittiesModule::next_kitty_id(), kitty_id + 1);
         assert_eq!(KittiesModule::kitties(kitty_id).is_some(), true);
@@ -22,7 +23,7 @@ fn create_kitty_works() {
 
         crate::NextKittyId::<Test>::set(crate::KittyId::max_value());
         assert_noop!(
-            KittiesModule::create(RuntimeOrigin::signed(account_id)),
+            KittiesModule::create(RuntimeOrigin::signed(account_id), name),
             Error::<Test>::InvalidKittyId
         );
     })
@@ -33,24 +34,27 @@ fn breed_kitty_works() {
     new_test_ext().execute_with(|| {
         let kitty_id = 0;
         let account_id = 1;
+        let name1: [u8; 8] = *b"testcat1";
+        let name2: [u8; 8] = *b"testcat1";
+        let name3: [u8; 8] = *b"testcat1";
 
         assert_noop!(
-            KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id, kitty_id),
+            KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id, kitty_id, name1),
             Error::<Test>::InvalidKittyId
         );
 
-        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id)));
-        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id)));
+        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id), name1));
+        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id), name2));
 
         assert_noop!(
-            KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id, kitty_id),
+            KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id, kitty_id, name3),
             Error::<Test>::SameKittyId
         );
 
         assert_eq!(KittiesModule::next_kitty_id(), kitty_id + 2);
 
         assert_ok!(
-            KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id, kitty_id + 1)
+            KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id, kitty_id + 1, name3)
         );
 
         let breed_kitty_id = 2;
@@ -70,8 +74,10 @@ fn transfer_kitty_works() {
         
         let account_id = 1;
         let to = 2;
+
+        let name: [u8; 8] = *b"testcat1";
         
-        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id)));
+        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id), name));
         assert_eq!(KittiesModule::kitty_owner(kitty_id), Some(account_id));
 
         assert_noop!(KittiesModule::transfer(RuntimeOrigin::signed(to), account_id, kitty_id), Error::<Test>::NotOwner);
@@ -87,5 +93,58 @@ fn transfer_kitty_works() {
         assert_eq!(KittiesModule::kitty_owner(kitty_id), Some(account_id));
 
         System::assert_last_event(Event::KittyTransferred { who: to, to: account_id, kitty_id: kitty_id }.into() );
+    })
+}
+
+#[test]
+fn sale_kitty_works() {
+    new_test_ext().execute_with(|| {
+        let kitty_id = 0;
+        
+        let account_id = 1;
+        let to = 2;
+
+        let name: [u8; 8] = *b"testcat1";
+        
+        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id), name));
+        assert_eq!(KittiesModule::kitty_owner(kitty_id), Some(account_id));
+
+        assert_noop!(KittiesModule::sale(RuntimeOrigin::signed(to), kitty_id), Error::<Test>::NotOwner);
+
+        assert_ok!(KittiesModule::sale(RuntimeOrigin::signed(account_id), kitty_id));
+
+        System::assert_last_event(Event::KittyOnSale { who: account_id, kitty_id: kitty_id }.into() );
+
+        assert_eq!(KittiesModule::kitty_on_sale(kitty_id).is_some(), true);
+
+        assert_noop!(KittiesModule::sale(RuntimeOrigin::signed(account_id), kitty_id), Error::<Test>::AlreadyOnSale);
+    })
+}
+
+#[test]
+fn buy_kitty_works() {
+    new_test_ext().execute_with(|| {
+        let kitty_id = 0;
+        
+        let account_id = 1;
+        let to = 2;
+
+        let name: [u8; 8] = *b"testcat1";
+        
+        assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id), name));
+        assert_eq!(KittiesModule::kitty_owner(kitty_id), Some(account_id));
+
+        assert_noop!(KittiesModule::buy(RuntimeOrigin::signed(account_id), kitty_id), Error::<Test>::AlreadyOwner);
+
+        assert_noop!(KittiesModule::buy(RuntimeOrigin::signed(to), kitty_id), Error::<Test>::NoOnSale);
+
+        assert_ok!(KittiesModule::sale(RuntimeOrigin::signed(account_id), kitty_id));
+
+        assert_ok!(KittiesModule::buy(RuntimeOrigin::signed(to), kitty_id));
+
+        System::assert_last_event(Event::KittyBought { who: to, kitty_id: kitty_id }.into() );
+
+        assert_eq!(KittiesModule::kitty_owner(kitty_id), Some(to));
+
     })
 }

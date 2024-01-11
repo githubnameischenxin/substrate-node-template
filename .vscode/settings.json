@@ -1,0 +1,9 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./pallets/kitties/Cargo.toml",
+        "./pallets/kitties/Cargo.toml",
+        "./pallets/kitties/Cargo.toml",
+        "./pallets/kitties/Cargo.toml"
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false
+}
