@@ -26,7 +26,7 @@ pub fn migrate<T: Config>() -> Weight {
     log::info!(target: "migrate", "on_chain_version={:?}", on_chain_version);
     log::info!(target: "migrate", "current_version={:?}", current_version);
 
-    if on_chain_version != 0 {
+    if on_chain_version != 1 {
         return Weight::zero();
     }
     if current_version != 2 {
