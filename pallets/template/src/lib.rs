@@ -24,8 +24,12 @@ use frame_system::{
 use sp_runtime::{
 	transaction_validity::{InvalidTransaction, TransactionValidity, ValidTransaction},
 	RuntimeDebug,
+	offchain::{
+		http, Duration,
+	}
 };
-use codec::{Decode, Encode};
+use codec::{Decode, Encode,};
+use serde::{Deserialize, Deserializer};
 
 
 use sp_core::crypto::KeyTypeId;
@@ -65,7 +69,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-
+	use frame_support::inherent::Vec;
 	use sp_io::offchain_index;
 	
 	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo)]
@@ -79,6 +83,36 @@ pub mod pallet {
 			self.public.clone()
 		}
 	}
+
+	#[derive(Deserialize, Encode, Decode)]
+    struct PriceInfo {
+        #[serde(deserialize_with = "de_string_to_bytes")]
+        name: Vec<u8>,
+        price: u64,
+    }
+
+	pub fn de_string_to_bytes<'de, D>(de: D) -> Result<Vec<u8>, D::Error>
+        where
+        D: Deserializer<'de>,
+        {
+            let s: &str = Deserialize::deserialize(de)?;
+            Ok(s.as_bytes().to_vec())
+        }
+
+    use core::{convert::TryInto, fmt};
+    impl fmt::Debug for PriceInfo {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(
+                f,
+                "{{ name: {}, price: {} }}",
+                sp_std::str::from_utf8(&self.name).map_err(|_| fmt::Error)?,
+                &self.price
+                )
+        }
+    }
+
+	#[derive(Debug, Deserialize, Encode, Decode, Default)]
+	pub struct IndexingData(Vec<u8>, u64);
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -136,7 +170,7 @@ pub mod pallet {
 
 			// Update storage.
 			<Something<T>>::put(something);
-
+			
 			// Emit an event.
 			Self::deposit_event(Event::SomethingStored { something, who });
 			// Return a successful DispatchResultWithPostInfo
@@ -173,16 +207,17 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[crate::pallet::call_index(3)]
-		#[crate::pallet::weight(0)]
+		#[pallet::call_index(3)]
+		#[pallet::weight(0)]
 		pub fn set_number_to_off_chain_storage(origin: OriginFor<T>, number: u64) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-
-			let key = Self::derive_key(System::block_number());
+			let _who = ensure_signed(origin)?;
+			
+			// let key = Self::derive_key(frame_system::Pallet::<T>::block_number());
+			let key = Self::derive_key_const();
 			let data = IndexingData(b"set_number_to_off_chain_storage".to_vec(), number);
 			offchain_index::set(&key, &data.encode());
 
-			log::info!("OCW ==> in call unsigned_extrinsic_with_signed_payload: {:?}", payload.number);
+			log::info!("Pallet ==> in call set_number_to_off_chain_storage, offchain_index key:{:?}, value:{:?}", key, number);
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
@@ -229,7 +264,43 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Offchain worker entry point.
-		fn offchain_worker(_block_number: T::BlockNumber) {
+		fn offchain_worker(block_number: T::BlockNumber) {
+
+			
+			log::info!("OCW ==> Hello World from offchain workers!: {:?}", block_number);
+
+			if let Ok(info) = Self::fetch_github_info() {
+				log::info!("OCW ==> Price Info: {:?}", info);
+
+				
+				// Retrieve the signer to sign the payload
+				let signer = Signer::<T, T::AuthorityId>::any_account();
+
+				// `send_unsigned_transaction` is returning a type of `Option<(Account<T>, Result<(), ()>)>`.
+				//	 The returned result means:
+				//	 - `None`: no account is available for sending transaction
+				//	 - `Some((account, Ok(())))`: transaction is successfully sent
+				//	 - `Some((account, Err(())))`: error occurred when sending the transaction
+				if let Some((_, res)) = signer.send_unsigned_transaction(
+					// this line is to prepare and return payload
+					|acct| Payload { info.price, public: acct.public.clone() },
+					|payload, signature| Call::unsigned_extrinsic_with_signed_payload { payload, signature },
+				) {
+					match res {
+						Ok(()) => {log::info!("OCW ==> unsigned tx with signed payload successfully sent.");}
+						Err(()) => {log::error!("OCW ==> sending unsigned tx with signed payload failed.");}
+					};
+				} else {
+					// The case of `None`: no account is available for sending
+					log::error!("OCW ==> No local account available");
+				}
+				
+			} else {
+				log::info!("OCW ==> Error while fetch price info!");
+			}
+
+			log::info!("OCW ==> Leave from offchain workers!: {:?}", block_number);
+			
 			// let value: u64 = 42;
 			// // This is your call to on-chain extrinsic together with any necessary parameters.
 			// let call = Call::submit_data_unsigned { key: value };
@@ -241,41 +312,50 @@ pub mod pallet {
 			// 	log::error!("OCW ==> Failed in offchain_unsigned_tx");
 			// });
 
-			let number: u64 = 42;
-			// Retrieve the signer to sign the payload
-			let signer = Signer::<T, T::AuthorityId>::any_account();
-
-			// `send_unsigned_transaction` is returning a type of `Option<(Account<T>, Result<(), ()>)>`.
-			//	 The returned result means:
-			//	 - `None`: no account is available for sending transaction
-			//	 - `Some((account, Ok(())))`: transaction is successfully sent
-			//	 - `Some((account, Err(())))`: error occurred when sending the transaction
-			if let Some((_, res)) = signer.send_unsigned_transaction(
-				// this line is to prepare and return payload
-				|acct| Payload { number, public: acct.public.clone() },
-				|payload, signature| Call::unsigned_extrinsic_with_signed_payload { payload, signature },
-			) {
-				match res {
-					Ok(()) => {log::info!("OCW ==> unsigned tx with signed payload successfully sent.");}
-					Err(()) => {log::error!("OCW ==> sending unsigned tx with signed payload failed.");}
-				};
-			} else {
-				// The case of `None`: no account is available for sending
-				log::error!("OCW ==> No local account available");
-			}
+			
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
+		// #[deny(clippy::clone_double_ref)]
+		// fn derive_key(block_number: T::BlockNumber) -> Vec<u8> {
+		// 	block_number.using_encoded(|encoded_bn| {
+		// 		b"node-template::storage::"
+		// 			.iter()
+		// 			.chain(encoded_bn)
+		// 			.copied()
+		// 			.collect::<Vec<u8>>()
+		// 	})
+		// }
 		#[deny(clippy::clone_double_ref)]
-		fn derive_key(block_number: T::BlockNumber) -> Vec<u8> {
-			block_number.using_encoded(|encoded_bn| {
-				b"node-template::storage::"
-					.iter()
-					.chain(encoded_bn)
-					.copied()
-					.collect::<Vec<u8>>()
-			})
+		fn derive_key_const() -> Vec<u8> {
+			"node-template::storage".into()
 		}
+
+		fn fetch_github_info() -> Result<PriceInfo, http::Error> {
+            // prepare for send request
+            let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(8_000));
+            let request =
+                http::Request::get("https://api.github.com/orgs/substrate-developer-hub");
+            let pending = request
+                .add_header("User-Agent", "Substrate-Offchain-Worker")
+                .deadline(deadline).send().map_err(|_| http::Error::IoError)?;
+            let response = pending.try_wait(deadline).map_err(|_| http::Error::DeadlineReached)??;
+            if response.code != 200 {
+                log::warn!("Unexpected status code: {}", response.code);
+                return Err(http::Error::Unknown)
+            }
+            let body = response.body().collect::<Vec<u8>>();
+            let body_str = sp_std::str::from_utf8(&body).map_err(|_| {
+                log::warn!("No UTF8 body");
+                http::Error::Unknown
+            })?;
+
+            // parse the response str
+            let price_info: PriceInfo =
+                serde_json::from_str(body_str).map_err(|_| http::Error::Unknown)?;
+
+            Ok(price_info)
+        }
 	}
 }

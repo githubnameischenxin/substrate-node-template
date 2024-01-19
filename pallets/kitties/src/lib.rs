@@ -233,7 +233,7 @@ pub mod pallet {
 			let price = T::KittyPrice::get();
 			T::Currency::transfer(&who, &owner, price, ExistenceRequirement::KeepAlive)?;
 
-
+			
 			KittyOwner::<T>::insert(kitty_id, &who);
 			KittyOnSale::<T>::remove(kitty_id);
 
