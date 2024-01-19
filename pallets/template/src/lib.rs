@@ -88,7 +88,7 @@ pub mod pallet {
     struct PriceInfo {
         #[serde(deserialize_with = "de_string_to_bytes")]
         name: Vec<u8>,
-        price: u64,
+        followers: u64,
     }
 
 	pub fn de_string_to_bytes<'de, D>(de: D) -> Result<Vec<u8>, D::Error>
@@ -104,9 +104,9 @@ pub mod pallet {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(
                 f,
-                "{{ name: {}, price: {} }}",
+                "{{ name: {}, followers: {} }}",
                 sp_std::str::from_utf8(&self.name).map_err(|_| fmt::Error)?,
-                &self.price
+                &self.followers
                 )
         }
     }
@@ -275,7 +275,7 @@ pub mod pallet {
 				
 				// Retrieve the signer to sign the payload
 				let signer = Signer::<T, T::AuthorityId>::any_account();
-
+				let number: u64 = info.followers;
 				// `send_unsigned_transaction` is returning a type of `Option<(Account<T>, Result<(), ()>)>`.
 				//	 The returned result means:
 				//	 - `None`: no account is available for sending transaction
@@ -283,7 +283,7 @@ pub mod pallet {
 				//	 - `Some((account, Err(())))`: error occurred when sending the transaction
 				if let Some((_, res)) = signer.send_unsigned_transaction(
 					// this line is to prepare and return payload
-					|acct| Payload { info.price, public: acct.public.clone() },
+					|acct| Payload { number, public: acct.public.clone() },
 					|payload, signature| Call::unsigned_extrinsic_with_signed_payload { payload, signature },
 				) {
 					match res {
