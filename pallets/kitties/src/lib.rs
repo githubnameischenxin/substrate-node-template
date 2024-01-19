@@ -15,10 +15,10 @@ mod tests;
 pub mod pallet {
 	use frame_support::{pallet_prelude::*, traits::{Randomness, Currency, ExistenceRequirement, StorageVersion}, PalletId, weights::Weight};
 	use frame_system::pallet_prelude::{*, BlockNumberFor};
-	
+
 	use sp_io::hashing::blake2_128;
 	use sp_runtime::{traits::AccountIdConversion};
-
+	
 	use crate::migrations;
 
 	pub type KittyId = u32;
@@ -52,7 +52,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 	}
 
-	
+
 	#[pallet::storage]
 	#[pallet::getter(fn next_kitty_id)]
 	pub type NextKittyId<T> = StorageValue<_, KittyId, ValueQuery>;
@@ -106,6 +106,8 @@ pub mod pallet {
 			STORAGE_VERSION.put::<Pallet<T>>();
 			weight
 		}
+
+
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -130,7 +132,7 @@ pub mod pallet {
 
 			let price = T::KittyPrice::get();
 			T::Currency::transfer(&who, &Self::get_account_id(), price, ExistenceRequirement::KeepAlive)?;
-			
+
 			Kitties::<T>::insert(kitty_id, &kitty);
 			KittyOwner::<T>::insert(kitty_id, &who);
 
@@ -143,8 +145,8 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
 		pub fn breed(origin: OriginFor<T>, kitty_id_1: KittyId, kitty_id_2: KittyId, name: [u8; 8]) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			
-			
+
+
 			ensure!(Kitties::<T>::contains_key(kitty_id_1), Error::<T>::InvalidKittyId);
 			ensure!(Kitties::<T>::contains_key(kitty_id_2), Error::<T>::InvalidKittyId);
 
@@ -169,7 +171,7 @@ pub mod pallet {
 			}
 			let kitty = Kitty { dna, name };
 
-			
+
 
 			let price = T::KittyPrice::get();
 			T::Currency::transfer(&who, &Self::get_account_id(), price, ExistenceRequirement::KeepAlive)?;
@@ -195,7 +197,7 @@ pub mod pallet {
 			KittyOwner::<T>::insert(kitty_id, &to);
 
 			Self::deposit_event(Event::KittyTransferred { who, to, kitty_id });
-			
+
 			Ok(())
 		}
 
@@ -214,7 +216,7 @@ pub mod pallet {
 			KittyOnSale::<T>::insert(kitty_id, ());
 
 			Self::deposit_event(Event::KittyOnSale { who: who, kitty_id: kitty_id } );
-			
+
 			Ok(())
 		}
 
@@ -230,13 +232,13 @@ pub mod pallet {
 
 			let price = T::KittyPrice::get();
 			T::Currency::transfer(&who, &owner, price, ExistenceRequirement::KeepAlive)?;
-			
+
 
 			KittyOwner::<T>::insert(kitty_id, &who);
 			KittyOnSale::<T>::remove(kitty_id);
 
 			Self::deposit_event(Event::KittyBought { who: who, kitty_id: kitty_id } );
-			
+
 			Ok(())
 		}
 	}
@@ -256,6 +258,7 @@ pub mod pallet {
 				&sender,
 				<frame_system::Pallet<T>>::extrinsic_index(),
 			);
+			
 			payload.using_encoded(blake2_128)
 		}
 
