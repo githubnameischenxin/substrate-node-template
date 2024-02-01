@@ -327,6 +327,11 @@ impl pallet_template::Config for Runtime {
 	type AuthorityId = pallet_template::crypto::TestAuthId;
 }
 
+impl pallet_poe::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type MaxClaimLength = ConstU32<512>;
+}
+
 parameter_types! {
 	pub KittyPrice: Balance = EXISTENTIAL_DEPOSIT * 10;
 	pub KittyPalletId: PalletId = PalletId(*b"py/kitty");
@@ -361,6 +366,7 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
+		PoeModule: pallet_poe,
 		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 		KittiesModule: pallet_kitties,
 	}
