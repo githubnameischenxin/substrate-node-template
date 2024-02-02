@@ -1,0 +1,44 @@
+第一组:
+./target/release/node-template key generate --scheme Sr25519 --password-interactive
+Key password:111111
+Secret phrase:       include author lamp dust bird river skull wonder make bamboo because sell
+  Network ID:        substrate
+  Secret seed:       0x83e7bf55bc7c2eb3903c32bc5457378de1fa7b8600a4b6d40ec1280632fa8e51
+  Public key (hex):  0xf808433557a5c9158e4a81284a275b5bbe79b9a60b03707b0850e92a98424d3c
+  Account ID:        0xf808433557a5c9158e4a81284a275b5bbe79b9a60b03707b0850e92a98424d3c
+  Public key (SS58): 5HfvBoVkVTDiKzMrFJZdd1aECg1dhsednj8xqzW5FVF8sCpB
+  SS58 Address:      5HfvBoVkVTDiKzMrFJZdd1aECg1dhsednj8xqzW5FVF8sCpB
+
+  ./target/release/node-template key inspect --password-interactive --scheme Ed25519 "include author lamp dust bird river skull wonder make bamboo because sell"
+Key password:111111
+Secret phrase:       include author lamp dust bird river skull wonder make bamboo because sell
+  Network ID:        substrate
+  Secret seed:       0x83e7bf55bc7c2eb3903c32bc5457378de1fa7b8600a4b6d40ec1280632fa8e51
+  Public key (hex):  0x4a6e1918a339e8a9b23a39106d3cdd4f9d680056d632640944859d757e258f02
+  Account ID:        0x4a6e1918a339e8a9b23a39106d3cdd4f9d680056d632640944859d757e258f02
+  Public key (SS58): 5DkJ78mqj7cW6Nt4kqgRjaAmGgGjkLxWGEaRVdu4NJtgcGUH
+  SS58 Address:      5DkJ78mqj7cW6Nt4kqgRjaAmGgGjkLxWGEaRVdu4NJtgcGUH
+
+
+
+
+第二组:
+  ./target/release/node-template key generate --scheme Sr25519 --password-interactive
+Key password:111111
+Secret phrase:       ill skate wave language giant head exclude place ritual noble pigeon slogan
+  Network ID:        substrate
+  Secret seed:       0x476b1dd9247598964c45fb2c95ec836e6d2f26f39d70cb4b33a6ccc27264e65c
+  Public key (hex):  0x680dd006526f1a3add93a8093c3747b0693548d887ff47af5093259045a2564a
+  Account ID:        0x680dd006526f1a3add93a8093c3747b0693548d887ff47af5093259045a2564a
+  Public key (SS58): 5ER8wVeiQxa1XY1RE2fhBsVD8pexfwoGYiEGnJS9J45fP82D
+  SS58 Address:      5ER8wVeiQxa1XY1RE2fhBsVD8pexfwoGYiEGnJS9J45fP82D
+
+  ./target/release/node-template key inspect --password-interactive --scheme Ed25519 "ill skate wave language giant head exclude place ritual noble pigeon slogan"
+Key password:111111
+Secret phrase:       ill skate wave language giant head exclude place ritual noble pigeon slogan
+  Network ID:        substrate
+  Secret seed:       0x476b1dd9247598964c45fb2c95ec836e6d2f26f39d70cb4b33a6ccc27264e65c
+  Public key (hex):  0xe5369d09866600edb8b4848c75ef183db4dbd1478f229396f4d15d52ad9267a1
+  Account ID:        0xe5369d09866600edb8b4848c75ef183db4dbd1478f229396f4d15d52ad9267a1
+  Public key (SS58): 5HFF3e81ahX8jpXLaK14aFCr93gACWVdPgJEszVCzaZ6gBfM
+  SS58 Address:      5HFF3e81ahX8jpXLaK14aFCr93gACWVdPgJEszVCzaZ6gBfM
