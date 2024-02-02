@@ -5,12 +5,12 @@
 2. `./add_key1.sh` 
 3. `./add_key2.sh`  
 4. `ls /tmp/node01/chains/local_testnet/keystore`
-5. 修改`./node2_start.sh` 写入第一个节点 identity
-6. `./node2_start.sh` 启动第二个节点，然后停止
-7. `./add_key3.sh`
-8. `./add_key4.sh`
-9. `ls /tmp/node01/chains/local_testnet/keystore`
-10. `./node1_start.sh` 启动第一个节点
+5. `./node1_start.sh` 启动节点
+6. 修改`./node2_start.sh` 写入第一个节点 identity
+7. `./node2_start.sh` 启动第二个节点，然后停止
+8. `./add_key3.sh`
+9. `./add_key4.sh`
+10. `ls /tmp/node01/chains/local_testnet/keystore`
 11. `./node2_start.sh` 启动第二个节点
 ![运行截图](./result6_1.jpg)
 ![运行截图](./result6_2.jpg)
